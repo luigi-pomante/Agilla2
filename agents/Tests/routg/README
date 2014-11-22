@@ -1,0 +1,29 @@
+This tests the reliability of the routg operation.  Copy topoogy.nss into
+$WUAPPS/Agilla/.  Then run a simulation using:
+
+  $ build/pc/main.exe -b=0 -l=1 -r=topology.nss 16
+
+The topology file creates a multi-hop network where nodes 0 and 8 can both
+communicate with node 4, but not directly with each other, and node 4 
+can communicate with both nodes 0 and 8.
+
+After launching the simulation, inject react.ma into node 0.  Then uncomment 
+the first section of react.ma and inject it again into mote 0.  Then
+inject routg.ma into mote 4.  
+
+The agent on mote 4 will periodically routg a tuple.  The last field of this
+tuple will contain a value that corresponds to the number of times the
+rout operation was performed.  The react.ma agent will record the 
+number of times it has reacted in address 0 of its heap.  The difference
+between the value in the tuple, and the value in the heap is the number of
+rout operations that failed to reach the node.
+
+Results on TOSSIM on 2005-12-28-18-38:
+  Total number rout:	1626
+  Number received by 0:	1625	loss ratio = 0.0615%
+  Number received by 8:	1571	loss ratio = 3.383%
+  
+Results on TOSSIM on 2005-12-28-22-04:  (done without topology file)
+  Total number of rout:	2115
+  Number received by 0:	2113	loss ratio = 0.0946%
+  Number received by 8:	2113	loss ratio = 0.0946%

@@ -1,0 +1,10 @@
+This tests rrdpgs in a 3x3 network.  Make sure the number of colums is
+set to 3.
+
+  $ build/pc/main.exe -b=0 -l=1 9
+
+Inject out_border.ma into node 0.  It will clone itself onto every node around
+the perimeter of the network.
+
+Inject rrdpgs.ma into node 4.  It will perform
+rrdpgs and fetch each location from the heap, each time popping it off the stack. 

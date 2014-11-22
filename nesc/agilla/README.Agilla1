@@ -1,0 +1,450 @@
+$Id: README,v 1.24 2006/05/22 03:36:19 chien-liang Exp $
+
+Agilla: a mobile agent middleware for wireless sensor networks.  Agilla enables
+users to inject mobile agents into a wireless sensor network.  Agents are 
+autonomous computational entities that can migrate or clone across nodes in a 
+wireless sensor network.  Two types of migration and clone instructions are 
+provided: "strong" in which both code and state is maintained, and "weak" in which
+only the code is maintained.
+
+Agilla facilitates inter-agent coordination via localized tuple spaces, 
+remote tuple space operations, and a neighbor list.
+
+This document can be found in the TinyOS CVS repository under module
+tinyos-1.x/contrib/wustl/apps/Agilla.
+
+Author: Chien-Liang Fok <liangfok@wustl.edu>
+Website: http://mobilab.wustl.edu/projects/agilla/index.html
+
+DOWNLOADING AGILLA
+-------------------------------------------------------------------------------
+The latest version of Agilla can be downloaded off the TinyOS CVS server.  
+Instructions for downloading it are available here:  
+http://sourceforge.net/cvs/?group_id=28656
+
+Checkout module tinyos-1.x/contrib/wustl.  You can use the following command:
+
+  cvs -z3 -d:pserver:anonymous@tinyos.cvs.sourceforge.net:/cvsroot/tinyos co \
+  -P tinyos-1.x/contrib/wustl
+
+Once downloaded, Agilla's firmware will be in tinyos-1.x/contrib/wustl/apps/Agilla, 
+and the AgentInjector will be in tinyos-1.x/contrib/wustl/tools/java/.
+
+PREREQUISITE CHANGES TO TINYOS
+-------------------------------------------------------------------------------
+Agilla interfaces with the SpaceLocalizer (module 
+tinyos-1.x/contrib/wustl/apps/SpaceLocalizer) to gain spatial information.  
+SpaceLocalizer requires that the mote's UART port be set to 115200bps, which is
+by default 57600.  To change it to 115200, open 
+tinyos-1.x/tos/platforms/<platform>/UPLUART0M.nc and change "outp(15, UBRR0L);" 
+to "outp(7, UBRR0L);".
+
+
+HARDWARE REQUIREMENTS
+-------------------------------------------------------------------------------
+This version of Agilla has been tested with Mica2 and MicaZ motes.  Note that
+currently SpaceLocalizer must be disabled when using MicaZ motes.  
+
+
+DEPENDENCIES
+-------------------------------------------------------------------------------
+Agilla relies on the following modules within TinyOS's CVS repository:
+ 1) tinyos-1.x/contrib/wustl/apps/AgillaAgents
+      -This contains numerous sample Agilla agents.
+ 2) tinyos-1.x/contrib/wustl/apps/LEDBlinker
+      -A utility that blinks the LEDs in various patterns.  Only uses
+         a single timer.  Used primarily for debugging purposes.
+ 3) tinyos-1.x/contrib/wustl/apps/SpaceLocalizer
+      -Interfaces with a Cricket mote for location-aware applications
+ 4) tinyos-1.x/contrib/wustl/tools/java/edu/wustl/mobilab/agilla
+      -The Java-based AgentInjector application.
+ 
+
+MAKEFILE FLAGS
+-------------------------------------------------------------------------------
+Agilla's makefile system requires that you create a "Makefile.Agilla" file 
+within tinyos-1.x/contrib/wustl/apps/Agilla/.  The contents of this file must
+look like:
+
+PFLAGS_AGILLA=-DAGILLA_NUM_AGENTS=3 \
+              -DAGILLA_NUM_CODE_BLOCKS=12 \
+              -DMESSAGE_BUFFER_SIZE=10 \
+              -DAGILLA_SNDR_BUFF_SIZE=3 \
+              -DAGILLA_SNDR_RETRY_TIMER=1536 \
+              -DAGILLA_SNDR_ABORT_TIMER=1536 \
+              -DAGILLA_SNDR_MAX_RETRIES=2 \
+              -DAGILLA_SNDR_RXMIT_TIMER=290 \
+              -DAGILLA_SNDR_MAX_RETRANSMITS=8 \
+              -DAGILLA_RCVR_BUFF_SIZE=3 \
+              -DAGILLA_RCVR_ABORT_TIMER=1000 \
+              -DAGILLA_RCVR_FIN_TIMER=300 \
+              -DAGILLA_LOCATION_UPDATE_TIMER=2048 \
+              -DAGILLA_MAX_NUM_NEIGHBORS=20 \
+              -DAGILLA_MAX_NUM_AGENTS=20 \
+              -DDEFAULT_NUM_COLUMNS=4 \
+              -DAGILLA_REMOTE_TS_OP_Q_SIZE=3 \
+              -DAGILLA_TS_SIZE=100 \
+              -DAGILLA_TS_NO_DUPLICATE=0 \
+              -DAGILLA_RTS_TIMEOUT=256 \
+              -DAGILLA_RTS_MAX_NUM_TRIES=4 \
+              -DREACTION_MGR_BUFFER_SIZE=5 \
+              -DBEACON_PERIOD=2048 \
+              -DBEACON_RAND=1024 \
+              -DBEACON_TIMEOUT=9216 \
+              -DTIMEOUT_GET_LOCATION=1024 \
+              -DTIMEOUT_GET_NUM_AGENTS=1024 \
+	      -DCLUSTER_UPDATE_INTERVAL=10240 \
+	      -DCLUSTERMSG_RAND=5120 \
+	      -DAGILLA_RF_POWER=31 \
+              -DENABLE_SPACE_LOCALIZER=1 \
+              -DENABLE_NEIGHBOR_LIST_FILTER=0 \
+              -DENABLE_GRID_ROUTING=0 \
+              -DENABLE_CLUSTERING=0 \
+              -DENABLE_EXP_LOGGING=0 \
+              -DOMIT_AGENT_SENDER=0 \
+              -DOMIT_AGENT_RECEIVER=0 \
+              -DOMIT_CONTEXT_DISCOVERY=0 \
+              -DOMIT_RXN_MGR=0 \
+              -DOMIT_NETWORK_INTERFACE=0 \
+              -DOMIT_REMOTE_TS_OP_MGR=0 \
+              -DOMIT_ERROR_MGR=0 \
+              -DOMIT_TS=0 \
+              -DINCLUDE_DEFAULT_AGENT=0 \
+              -DPRINT_RXN_FIRED=0 \
+              -DDEBUG_NETWORK_INTERFACE=0 \
+              -DDEBUG_MESSAGE_BUFFER=0 \
+              -DDEBUG_AGENT_RECEIVER=0 \
+              -DDEBUG_AGENT_SENDER=0 \
+              -DDEBUG_OPSTACK=0 \
+              -DDEBUG_HEAPMGR=0 \
+              -DDEBUG_AGENT_MGR=0 \
+              -DDEBUG_CODEMGR=0 \
+              -DDEBUG_REMOTE_TS_OP_MGR=0 \
+              -DDEBUG_RXNMGR=0 \
+              -DDEBUG_TS=0 \
+              -DDEBUG_TUPLE_UTIL=0 \
+              -DDEBUG_NEIGHBORLIST=0 \
+              -DDEBUG_CLUSTERING=0 \
+              -DDEBUG_AGILLA_ENGINE=0 \
+              -DDEBUG_OP_SLEEP=0 \
+              -DDEBUG_OP_RXN=0 \
+              -DDEBUG_OPCOMPARE=0 \
+              -DDEBUG_OP_RTS=0 \
+              -DDEBUG_OPLOCTOVALUE=0 \
+              -DDEBUG_HEAP_MGR=0 \
+              -DDEBUG_ADDRESS_MGR=0 \
+              -DDEBUG_TIMESYNC=0 \
+              -DDEBUG_LOCATION_DIRECTORY=0 \
+              -DDEBUG_OP_GET_AGENTS=0 \
+              -DDEBUG_OP_GET_CLOSEST_AGENT=0 \
+              -DDEBUG_OP_GETLOCATION=0 \
+              -DDEBUG_OP_GETNUMAGENTS=0 \
+              -DDEBUG_OP_RTS=0 \
+              -DDEBUG_OP_FIND_MATCH=0 \
+              -DNBR_LIST_PRINT_CHANGES=0
+
+
+
+Details on each of these flags is described below. Default values are in 
+parenthesis.
+
+-DAGILLA_NUM_AGENTS=<num> (3)
+   The maximum number of agents per node.  This value depends on 
+   the amount of memory available.  Try to keep RAM usage below 3.5K.
+
+-DAGILLA_NUM_CODE_BLOCKS=<num> (12)
+   The number of code blocks within the CodeMgr.  Each code block is 22 bytes.
+   The CodeMgr allocates the minimum number of blocks necessary to hold an
+   agent's code.
+
+-DMESSAGE_BUFFER_SIZE=<num> (10)
+   The number of message buffers in NetworkInterfaceM.  All messages go through
+   the message buffer to handle multiple components performing send operations
+   simultaneously.
+
+-DAGILLA_SNDR_BUFF_SIZE=<num> (3)
+   The maximum number of simultaneous outgoing agents.
+   
+-DAGILLA_SNDR_RETRY_TIMER=<num> (1536)
+   The amount of time in binary milliseconds before the agent sender 
+   aborts the migration process and retries from the beginning.
+
+-DAGILLA_SNDR_ABORT_TIMER=<num> (1536)
+   The amount of time the sender pauses before aborting an agent.  This
+   ensures that the destination node times out the receive process and 
+   frees up the memory.  This must be higher than -DAGILLA_RCVR_ABORT_TIMER.
+   
+-DAGILLA_SNDR_MAX_RETRIES=<num> (2)
+   The maximum number of times the agent sender will retry migrating an
+   agent before permanently aborting.
+
+-DAGILLA_SNDR_RXMIT_TIMER=<num> (290)
+   The amount of time in binary milliseconds before the agent sender 
+   retransmits a message.  If an acknowledgement is received within this
+   time, the message is not retransmitted.   
+   
+-DAGILLA_SNDR_MAX_RETRANSMITS=<num> (8)
+   The maximum number of times the agent sender will retransmit a message
+   before aborting.
+
+-DAGILLA_RCVR_BUFF_SIZE=<num> (3)
+   The number of simultaneous incoming agents.  This value is limited
+   by memory availability.  NOTE: THIS OPTION IS NO LONGER AVAILABLE
+   
+-DAGILLA_RCVR_ABORT_TIMER=<num> (1000)
+   The amount of time without receiving messages that the agent receiver 
+   abort the migration process.
+   
+-DAGILLA_RCVR_FIN_TIMER=<num> (300)
+   The amount of time that the receiver waits after receiving an agent to make
+   sure no duplicate messages for the agent arrive.  The main purpose of this
+   is to prevent duplicate agents.
+   
+-DAGILLA_LOCATION_UPDATE_TIMER=<num> (2048)
+   The period of updating a cluster head with an agent's location.
+   This is only used when -DENABLE_CLUSTERING=1.
+  
+-DAGILLA_MAX_NUM_NEIGHBORS=<num> (20)
+   The size of the neighbor list.
+
+-DAGILLA_MAX_NUM_AGENTS=<num> (20)
+   The maximum number of agents in a cluster.  This is only used when 
+   -DENABLE_CLUSTERING=1.
+
+-DDEFAULT_NUM_COLUMNS=<num> (4)
+   Specifies the default number of columns.  This is used when 
+   DENABLE_NEIGHBOR_LIST_FILTER=1.  It creates a virtual multi-hop network
+   by limiting the neighbor list to contain only nodes within 1 hop as defined
+   within a grid topology.
+   
+-DAGILLA_REMOTE_TS_OP_Q_SIZE=<num> (3)
+   The maximum number of remote tuple space operations.
+   
+-DAGILLA_TS_SIZE=<num> (100)
+   The size of the tuple space in bytes.  Note that this consumes RAM.
+
+-DAGILLA_TS_NO_DUPLICATE=<num> (0)
+   Determines whether duplicate tuples should be allowed in the tuple space.
+   This is useful when performing rout operations.  If the ACK is lost, the
+   initiating node will retransmit.  This may result in duplicate tuples
+   in the destination's tuple space.
+   
+-DAGILLA_RTS_TIMEOUT=<num> (256)
+   The maximum amount of time a node waits for an acknowledgement when 
+   performing a remove tuple space operation.
+
+-DAGILLA_RTS_MAX_NUM_TRIES=<num> (4)
+   The maximum number of times a node will retry transmitting a tuple space 
+   operation before trimming out.
+
+-DREACTION_MGR_BUFFER_SIZE=<num> (5
+   The maximum number of reactions that can be registered.   
+
+-DBEACON_PERIOD=<num> (2048)
+   The minimum beacon period.  Used for maintaining the neighbor list.
+   
+-DBEACON_RAND=<num> (1024)
+   The randomized part of the beacon period.  The actual beacon period is 
+   between BEACON_PERIOD and BEACON_PERIOD+BEACON_RAND.
+   
+-DBEACON_TIMEOUT=<num> (9216)
+   The amount of time over which no beacon from a particular neighbor is
+   received before removing that neighbor from the neighbor list.
+
+-DTIMEOUT_GET_LOCATION=<num> (1024)
+    The amount of time Agilla waits before cancelling a getAgentLocation 
+    operation.
+
+-DTIMEOUT_GET_NUM_AGENTS=<num> (1024)
+   The timeout interval when performing a agent location service operation.\
+   These operations include getAgents, getClosestAgent, and getNumAgents.
+
+-DCLUSTER_UPDATE_INTERVAL=<num> (10240)
+   The period of updating the base station with the cluster's information.
+   This is only used when -DENABLE_CLUSTERING=1.
+   
+-DCLUSTERMSG_RAND=<num> (5120)
+   The random interval to add to the base CLUSTER_UPDATE_INTERVAL.  This is 
+   only used when -DENABLE_CLUSTERING=1.
+
+-DAGILLA_RF_POWER=<num> (31)
+   The power level of the radio.  This is only used with the CC2420Control.
+       
+-DENABLE_SPACE_LOCALIZER=<1/0> (1)   
+   Specifies whether Agilla should use the SpaceLocalizer to change 
+   radio frequencies when the mote's location changes.  To configure the 
+   possible location spaces, and what radio frequencies are used for each
+   space, edit event "SpaceLocalizerI.moved(...)" within 
+   <agilla>/components/LocationMgrM.nc.  By default, there are two spaces
+   defined: "DOCK" and "SHIP".  DOCK uses CC1000_CHANNEL_2 while SHIP uses
+   CC1000_CHANNEL_4.  The CC1000 channel frequencies are defined within
+   module tinyos-1.x/contrib/wustl/SpaceLocalizer/SpaceLocalizer.h.
+
+-DENABLE_NEIGHBOR_LIST_FILTER=<1/0> (0)
+   Specifies whether the neighbor list filter is enabled.  If enabled, the 
+   filter will block adding any neighbors that are not immdiate neighbors
+   based on the grid topology from being added to the neighbor list.  This
+   is used to simulate a multi-hop network.
+
+-DENABLE_GRID_ROUTING=<num> (0)
+   Toggles whether the neighbor list should be filtered based on a grid topology.
+
+-DENABLE_CLUSTERING=<num> (0)
+   Toggles whether clustering is enabled.  This is used by the agent location
+   directory service.
+
+-DENABLE_EXP_LOGGING=<num> (0)
+   Toggles whether experimental logging messages should be sent over the UART.
+
+-DOMIT_AGENT_SENDER=<1/0> (0)
+   Specifies whether the agent sender should be included.  This is use for
+   isolating bugs.  When set to 1, the agent sender components will not be
+   compiled.
+
+-DOMIT_AGENT_RECEIVER=<1/0> (0)
+   Specifies whether the agent receiver should be included.  This is use for
+   isolating bugs.  When set to 1, the agent receiver components will not be
+   compiled.
+   
+-DOMIT_CONTEXT_DISCOVERY=<1/0> (0)
+   Specifies whether the context discovery components should be included.  This 
+   is use for isolating bugs.  When set to 1, the context discovery components 
+   will not be compiled.
+
+-DOMIT_NETWORK_INTERFACE=<1/0> (0) 
+   Specifies whether the network interface buffer should be enabled.
+   
+-DOMIT_REMOTE_TS_OP_MGR=<1/0> (0)
+   Specifies whether the remote tuple space operation manager should be enabled.
+
+-DOMIT_ERROR_MGR=<1/0> (0)
+   Specifies whether the error manager should be enabled.
+   
+-DOMIT_TS=<1/0> (0)
+   Specifies whether the tuple space should be enabled or disabled.
+
+-DINCLUDE_DEFAULT_AGENT=<1/0> (0)
+   Sets whether an agent is hard-coded into the middleware and automatically 
+   started when the mote boots.  This is useful for running Agilla without 
+   an AgentInjector.
+
+
+
+STARTING THE AGENT INJECTOR
+-------------------------------------------------------------------------------
+Agilla uses a Java-based AgentInjector to inject agents into a wireless sensor
+network.  The AgentInjector is located in module
+tinyos-1.x/contrib/wustl/tools/java/edu/wustl/mobilab/agilla.
+
+To compile the AgentInjector, go into its directory and type "make".
+
+Start the AgentInjector using the following command:
+
+  $ java -Djava.security.policy=java.policy edu.wustl.mobilab.agilla.AgentInjector 
+    -comm COM1:115200 -d &
+
+Make sure /opt/tinyos-1.x/contrib/wustl/tools/java/ is in the CLASSPATH.
+
+   
+REMOTE TUPLE SPACE OPERATIONS   
+-------------------------------------------------------------------------------
+
+The following diagram shows the sequence of messages that are passed during a
+remote tuple space operation where the initiator is the PC, and the destination 
+is a node not directly connected to it.
+
+ ----    (1)    --------    (2)    --------
+|    |  ---->  |        |  ---->  |        |
+| PC |         | Mote 1 |         | Mote 2 |
+|    |  <----  |        |  <----  |        |
+ ----    (4)    --------    (3)    --------
+ 
+ 
+ (1) dest=mote2, reply=null
+ (2) dest=mote2, reply=mote1*
+ (3) dest=mote1
+ (4) dest=uart**
+ 
+ *  When mote 1 receives a request destined for a remote node, it assumes it came 
+    from the base station, and forwards the request to the destination after 
+    setting the reply address to be itself.
+ ** When mote 1 receives an unexpected results message from mote2, it assumes its 
+    for the base station and forwards it to the uart.  A possible race condition 
+    will occur if an agent on Mote 1 issues a remote operation using the same 
+    template while still waiting for a base station operation's results to arrive.
+    The probability of this occurring is minimal.
+
+The following diagram shows the sequence of messages that are passed during a
+remote tuple space operation where the initiator is a node not connected to a 
+programming board, and the destination is the PC.  Note that no address renaming
+occurs.
+
+ ----    (2)    --------    (1)    --------
+|    |  <----  |        |  <----  |        |
+| PC |         | Mote 1 |         | Mote 2 |
+|    |  ---->  |        |  ---->  |        |
+ ----    (3)    --------    (4)    --------
+ 
+ 
+ (1) dest=uart, reply=mote2
+ (2) dest=uart, reply=mote2 
+ (3) dest=mote2
+ (4) dest=mote2 
+ 
+ Note that in stage (3), if no match was found, the original template is saved as
+ the results, and the success field is set to 0.  This allows mote 1 to determine
+ whether it should forward the results to mote 2, or keep it for itself.
+
+
+GET NEIGHBOR LIST OPERATION
+-------------------------------------------------------------------------------
+The AgentInjector provides the following public method:
+
+  public Vector queryNbrList(int addr);
+
+This method allows a user to query the neighbor list of a mote.  The mote's 
+neighbor list is maintained using periodic beacons by 
+components/ContextDiscovery/NeighborListM.nc.  A user can query the neighbor
+list of a mote assuming it is physically one hop away from the base station.  
+Note that if DENABLE_NEIGHBOR_LIST_FILTER=1, a mote may be multiple virtual
+hops away from the base station.  This does not matter.  So long as the mote is 
+one physical hop away from the base station, the neighbor list can be queries.
+
+Query neighbor list works as follows.  Suppose you want to query the neighbor list
+of mote 2 in a network with the following topology:
+
+ ----    (1)    --------    (2)    --------
+|    |  ---->  |        |  ---->  |        |
+| PC |         | Mote 1 |         | Mote 2 |
+|    |  <----  |        |  <----  |        |
+ ----    (4)    --------    (3)    --------
+
+
+(1) The query is issued and passed over a serial link to Mote 1.
+(2) The query is bounced off Mote 1 to Mote 2.  The reply address of the query is
+    changed to be mote 1.
+(3) Mote 2 responds with its neighbor list.  Note that this may be more than
+    one message
+(4) Mote 1 receives a response, and forwards it to the PC.  Mote 1 will only 
+    forward it to the PC if it is a base station.  Mote 1 knows its a base 
+    station if it receives a heart beat from the PC.
+
+
+FUTURE IMPROVEMENTS
+-------------------------------------------------------------------------------
+1) Error reporting mechanism will offer more details on what went wrong.  The 
+   current error message only includes up to 2 bytes of data and the total 
+   message size is only 13 bytes.
+2) regrxn should update condition codes
+3) If the CodeMgr fails to allocate enough code blocks for an agent, send an
+   error back to the node from which the agent is arriving instead of going into
+   an AGILLA_ERROR_GET_FREE_BLOCK error mode.
+4) Use the flash memory for the tuple space.  Offer persistent tuple space.
+5) Port Agilla to Telos.
+6) High-level language.
+7) Policies for determining which agent should run when the mote cannot support  
+   any more agents.
+8) Middlware cognizant of global priority level; kill agents that are below current
+   priority.
+9) Reactions sensitive to thresholds, e.g., react when the temperature is above a certain value...
+10)Remote reactions.

@@ -1,0 +1,17 @@
+// Blinks the green LED a certain number of times, as specified by the
+// value on top of the stack. 
+//
+// Opstack Parameters: [val=#blinks][return address]				        	
+BLINKGREENC 	pushc 26 
+		putled // blink green
+		pushc 1
+		sleep
+		dec
+		copy
+		pushc 0
+		ceq
+		rjumpc BLINKGREENCD
+		rjump BLINKGREENC
+BLINKGREENCD	pop
+		jumps
+		

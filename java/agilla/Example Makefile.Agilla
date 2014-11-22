@@ -1,0 +1,2 @@
+#MIG = mig -target=pc java
+MIG = mig java

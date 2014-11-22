@@ -1,0 +1,66 @@
+$Id: README,v 1.5 2006/04/06 01:06:07 chien-liang Exp $
+
+Agilla AgentInjector: A Java application that enables users to inject 
+mobile agents into a wireless sensor network.
+
+Main class: AgentInjector.java
+
+
+DOWNLOADING THE AGILLA AGENT INJECTOR
+-------------------------------------------------------------------------------
+The AgentInjector is available off the TinyOS CVS server on sourceforge.net.
+Instructions for downloading it are available here:  
+http://sourceforge.net/cvs/?group_id=28656
+
+Checkout module tinyos-1.x/contrib/wustl/tools/java/edu/wustl/mobilab/agilla.
+
+You can use the following command:
+
+  cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/tinyos co \
+    -P tinyos-1.x/contrib/wustl/tools/java/edu/wustl/mobilab/agilla
+
+NOTE: Anonymous cvs access will typically not see the changes committed within
+the past 24 hours.
+
+
+CONFIGURING THE BUILD SYSTEM
+-------------------------------------------------------------------------------
+The Agent Injector uses the Make system.  Create a file called "Makefile.Agilla"
+within tinyos-1.x/contrib/wustl/tools/java/edu/wustl/mobilab/agilla/ with the
+following text:
+
+  #MIG = mig -target=pc java
+  #MIG = mig java
+
+Uncomment the first line if you are building the AgentInjector for injecting 
+agents into a simulated network as described here:
+http://mobilab.wustl.edu/projects/agilla/docs/tutorials/9_debug.html#injection
+
+Uncomment the second line if you are building the AgentInjector for injecting
+agents into a real wireless sensor network.
+
+RUNNING THE AGENT INJECTOR
+------------------------------------------------------------------------------
+The main class is edu.wustl.mobilab.agilla.AgentInjector.  Usage:
+
+Agilla [-h|--help|-comm <source>|-nc|-col <num columns>|-d|-nogui]
+  -comm <source> where <source> is COMx:[platform] 
+                                   or tossim-serial 
+                                   or RMI:address, default COM4:mica2
+  -nc do not connect to serial forwarder
+  -col <number of columns> Specifies the number of columns in the grid topology
+  -d for debug mode
+  -nogui to hide the graphical user interface (for automated testing purposes)
+
+The AgentInjector looks for an agilla.properties file in the root java directory 
+from where you launch the application.  It contains definitions of the initial 
+directory for the SwingAgentInjectorGUI and whether to run the Tester.  Here is 
+what it contains:
+
+  initDir=<initial directory when opening an agent in the AgentInjector>
+  defaultAgent=<file name of default agent, relative to initDir>
+  runTest=<true/false>
+  
+
+An example file is located in contrib/wustl/tools/java/Example Of agilla.properties.
+

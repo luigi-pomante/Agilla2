@@ -1,0 +1,8 @@
+// turn on the green LED for 1 second
+BLIPGREEN	pushc 2
+		putled		// turn on green LED
+		pushc 8
+		sleep		// sleep 1 second
+		pushc 0
+		putled		// turn off green LED
+		jumps

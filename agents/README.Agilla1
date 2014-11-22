@@ -1,0 +1,42 @@
+This file contains descriptions of the agents in the local directory.
+
+3Blink:
+  Blinks all three LEDs three times, and then halts
+  
+3BlinkContinuous:
+  Blinks all three LEDs three times, pauses, and repeats indefinitely.
+
+BlinkRedLEDContinuous:
+  Repeatedly blinks the red LED.  Runs indefinitely.
+
+Bounce0to1:
+  Blinks the red LED once.  Then, if the agent is on mote 0, it
+  migrates to performs a weak move to node 1.  Upon arriving at node 1,
+  it again blinks the red LED, then halts.
+
+Bounce0to1Continuous:
+  Same as Bounce0to1 except it performs a weak move to mote 0 when it
+  is at mote 1, resulting in it bouncing between motes 0 and 1 
+  indefinitely.
+
+CntToLedsHP:
+  Count up using the heap to store the counter, displays the last 
+  three bits of the counter on the LEDs.
+
+CntToLedsTS.ma 
+  Same as CntToLedsHP except it stores the current value in a tuple
+  in the local tuple space.
+  
+MigrateToUart:
+  Blinks the green LED 5 times, them migrates to location
+  (uart_x, uart_y).  Inject it anywhere into the network
+  and it should arrive back at the base station.
+
+MigrateToUartA:
+  Same as MigrateToUart except it does migrate to TinyOS
+  address uart.
+
+MigraetToUartStrong:
+  Same as MigrateToUartA except it migrates a really fat agent containing
+  multiple code, stack, heap, and reaction messages.
+  

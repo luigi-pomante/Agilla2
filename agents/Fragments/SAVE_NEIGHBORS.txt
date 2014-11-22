@@ -1,0 +1,29 @@
+// This procedure saves the results of a rdpg operation onto the
+// heap.  heap[0] = number of neighbors, heap[1...n] = location of
+// neighbors.  
+//
+// Param: [return address], [num locations], [loc1], [loc2], ...
+SAVE_NEIGHBORS	setvar 10 // heap[10] = return address
+		setvar 0  // heap[0] = number of neighbors on fire
+		pushc 1
+		setvar 11 // heap[11] = heap address for saving locations
+		getvar 0		
+SAVE_LOOP	copy     // begin loop, stack = [counter], [loc], [loc],...
+		pushc 0
+		ceq
+		rjumpc SAVE_DONE
+		swap   // stack = [loc], [counter], [loc],...
+		getvar 11
+		setvars   //heap[heap[11]] = location
+		getvar 11
+		inc
+		setvar 11  // heap[11]++
+		dec
+		rjump SAVE_LOOP
+SAVE_DONE	pop // pop the counter
+		pushc 11 
+		clearvar // clear heap[11]
+		getvar 10
+		pushc 10
+		clearvar // clear heap[10]
+		jumps

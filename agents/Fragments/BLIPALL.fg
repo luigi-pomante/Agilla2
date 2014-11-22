@@ -1,0 +1,7 @@
+BLIPALL		pushc 7
+		putled
+		pushc 8
+		sleep
+		pushc 0
+		putled
+		jumps

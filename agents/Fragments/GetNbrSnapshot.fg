@@ -1,0 +1,19 @@
+// This procedure pushes the location of all neighbors onto
+// the stack.
+
+BEGIN		pushc 0		
+LOOPGETNBR	copy	
+		numnbrs
+		ceq
+		rjumpc DONELOOPGETNBR
+		copy
+		getnbr
+		swap
+		inc
+		rjump LOOPGETNBR
+DONELOOPGETNBR	pop
+
+
+		
+		
+		

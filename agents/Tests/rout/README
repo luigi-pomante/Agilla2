@@ -1,0 +1,4 @@
+Tests the remote tuple space operation.
+
+Inject rout.ma onto nodes 0 and 1.  Then inject out.ma onto either node.
+out.ma will cause rout.ma to perform an rout between each other.

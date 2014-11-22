@@ -1,0 +1,45 @@
+// This procedure checks the distance of the location on the stack
+// with all of the location on the heap, sets cond=1 if the location
+// on the stack is <= 2 of any of the locations on the heap.  Assumes
+// heap[0] = number of locations, heap[1...n] = location of each
+// neighbor.
+//
+// Param:  [location], [return address]					
+CHECK_DIST	setvar 10  // heap[10] = location parameter
+		pushc 1
+		setvar 11 // heap[11] = heap address of current neighbor
+		pushc 0 // counter
+CHECK_DIST_LOOP	copy
+		getvar 0
+		ceq
+		pushcl CHECK_DIST_DONE
+		
+		
+		jumpc   // we've checked all neighbors
+		getvar 11
+		getvars
+		getvar 10
+		dist
+		pushc 2
+		cgt  // check if distance is > 2
+		rjumpc CHECK_DIST_NXT
+		pop // pop counter off stack
+		pushc 1
+		cpull     // The distance is <= 2, set cond = 1 and goto fin
+		rjump CHECK_DIST_FIN
+CHECK_DIST_NXT	getvar 11  // The dist is > 2, check next neighbor
+		inc
+		setvar 11 // heap[11]++
+		inc  // counter++
+		pushcl CHECK_DIST_LOOP		
+		
+		
+		jumps 
+CHECK_DIST_DONE	pop // pop counter off stack		
+		pushc 0
+		cpull // set condition = 0		
+CHECK_DIST_FIN	pushc 10
+		clearvar  // clear heap[10]
+		pushc 11
+		clearvar  // clear heap[11]
+		jumps // return

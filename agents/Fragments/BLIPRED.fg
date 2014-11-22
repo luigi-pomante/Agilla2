@@ -1,0 +1,8 @@
+// turn on the red LED for 1 second
+BLIPRED		pushc 1
+		putled		// turn on red LED
+		pushc 8
+		sleep		// sleep 1 second
+		pushc 0
+		putled		// turn off red LED
+		jumps

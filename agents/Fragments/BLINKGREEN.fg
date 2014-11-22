@@ -1,0 +1,13 @@
+// This fragment continuously blinks
+// the green LED.  It never returns.
+//
+// An example of how to use this code is as follows:
+//
+//    BEGIN  pushc BLINKGREEN
+//           jumps 
+
+BLINKGREEN  	pushc 26
+            	putled
+            	pushc 8
+            	sleep            
+            	rjump BLINKGREEN

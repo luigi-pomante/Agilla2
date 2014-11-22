@@ -1,0 +1,46 @@
+readCom=0
+writeCom=0
+writePort=0
+GW="M4A6J3UE"
+
+# Get the ports to read from and write to
+rm -f motelist.txt
+motelist | awk 'BEGIN{port=9000; i = -1;}
+		{if($1 != "'$GW'") {print("["i"]", $2, port); port++; i++;}}
+		END{}'| grep COM > motelist.txt 
+readCom=`motelist | awk '{if($1 == "'$GW'") print $2}'`
+
+# start the serial forwarders for all the ports
+# serial forwarder for read port
+echo "Creating serial forwarder on the read port"
+echo "java net.tinyos.sf.SerialForwarder -no-gui -quiet -comm serial@$readCom:tmote &"
+java net.tinyos.sf.SerialForwarder -no-gui -quiet -comm serial@$readCom:tmote &
+
+# serial forwarder for write ports
+count=`cat motelist.txt | wc -l`
+echo ""
+echo "Creating serial forwarders for write ports"
+echo "Total number of write ports to be created is $count"
+i=1
+while [ $i -le $count ]
+do
+	#if [ $i -eq 4 ]
+	#then
+	echo "--- Creating serial forwarder $i"
+	data=`grep "\[$i\]" motelist.txt`
+	#echo "$data"
+	writeCom=`echo $data | awk '{print $2}'`
+	writePort=`echo $data | awk '{print $3}'`
+	echo "java net.tinyos.sf.SerialForwarder -no-gui -quiet -comm serial@$writeCom:tmote -port $writePort  &"
+	java net.tinyos.sf.SerialForwarder -no-gui -quiet -comm serial@$writeCom:tmote -port $writePort  &
+	#arg=$writePort
+	#fi
+	i=`expr $i + 1`
+done
+
+# start the timesync program
+arg=`cat motelist.txt | awk 'BEGIN{str=""}{str=$3 " " str}END{print str}'`
+echo ""
+echo "Starting TimeSync"
+echo "java edu.wustl.mobilab.timesync.TimeSync $arg"
+java edu.wustl.mobilab.timesync.TimeSync $arg

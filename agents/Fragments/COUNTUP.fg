@@ -1,0 +1,27 @@
+// This procedure code fragment counts up on the LEDs by
+// turning on the red, green and yellow LEDs in that order.
+// It assumes the return address is on the top of the stack
+// when it is called.
+//
+// An example of how to use this code is as follows:
+//
+//    BEGIN  pushc RETURN
+//           pushc COUNTUP
+//           jumps 
+//    RETURN ....
+
+COUNTUP pushc 1       
+CLOOP   copy            
+        putled          
+        pushc 2         
+        mul          
+        pushc 4         
+        sleep           
+        copy            
+        pushc 8         
+        cneq            
+        rjumpc CLOOP
+        pop            
+        pushc 0         
+        putled
+        jumps

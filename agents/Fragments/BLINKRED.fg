@@ -1,0 +1,13 @@
+// This procedural code fragment continuously blinks
+// the red LED.  It never returns.
+//
+// An example of how to use this code is as follows:
+//
+//    BEGIN  pushc BLINKRED
+//           jumps 
+
+BLINKRED    pushc 25
+            putled
+            pushc 8
+            sleep            
+            rjump BLINKRED

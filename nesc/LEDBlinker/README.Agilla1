@@ -1,0 +1,6 @@
+LEDBlinker allows an application to blink the LEDs in various patterns.
+It is useful for reducing the number of timers used in an application.
+Instead of using a separate timer for each pattern, all patterns use
+the same timer when they blink the LEDs using this package.
+
+Author: Chien-Liang Fok <liangfok@wustl.edu>

@@ -1,0 +1,12 @@
+This tests the reliability of the routg operation in a 3x3 network. 
+Use the 3x3.nss topoogy file.
+
+  $ build/pc/main.exe -b=0 -l=1 -r=3x3.nss 9
+
+Inject react.ma into node 0.  It will clone itself onto every node around
+the perimeter of the network.
+
+Inject routg.ma into node 0.  It will migrate to node 4, and then perform
+routg operations.  All of the agents surrounding node 4 will react to it.
+
+If you only want one routg operation, you can inject routg_once.ma.

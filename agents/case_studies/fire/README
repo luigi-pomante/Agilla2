@@ -1,0 +1,41 @@
+These agents model and track fire.  They were evaluated in the following 
+paper published in IPSN 2005:
+
+  Chien-Liang Fok, Gruia-Catalin Roman, Chenyang Lu. "Mobile Agent Middleware 
+  for Sensor Networks: An Application Case Study" In Proceedings of the 4th 
+  International Conference on Information Processing in Sensor Networks 
+  (IPSN'05), Los Angeles, California, April 25-27, 2005, pp. 382-387.
+  
+Fire_Dynamic_40.ma:
+Fire_Dynamic_56.ma:
+Fire_Dynamic_75.ma:
+Fire_Dynamic_100.ma:
+Fire_Dynamic_random.ma:
+  These are agents modeling fire that epidemically spread throughout the 
+  network.  Fire is modeled using a tuple containing <"fir">.  Whenever this
+  tuple exists in the local tuple space, the mote holding the tuple space
+  is considered to be on fire.  The number in the agent's name indicates the
+  number of times the agent blinks its red LED before trying to clone itself
+  onto a remote mote.  Naturally, the larger the number the slower the fire
+  spreads.
+
+Fire_Static.ma:  
+  This fire agent does not spread, nor blink its RED led (it just keeps the 
+  red LED on after inserting a fire tuple).
+
+Fire_Static_Blink.ma: 
+  Same as Fire_Static.ma except it continuously blinks the RED led.
+  
+Fire_Top_2_Rows.ma:
+  Spreads a fire across the top two rows.  It must be injected into the 
+  upper-left mote.
+  
+Tracker_Linear_Up_Adaptive.ma:
+  A fire tracking agent that travels up a column until it finds a fire, at 
+  which point it clones itself in both horizontal directions until the fire's
+  perimeter is mapped.
+
+Tracker.ma:
+  A fire tracking agent that randomly traverses the network until a fire is
+  found, at which point it starts forming and maintaining a perimeter around
+  the fire.

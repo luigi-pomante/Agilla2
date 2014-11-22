@@ -1,0 +1,16 @@
+// This procedural code fragment performs a weak clone
+// to a random neighbor.  The condition codes are the 
+// same as those for instruction wmove.
+//
+// An example of how to use this code is as follows:
+//
+//    BEGIN  pushc RETURN
+//	     pushc RANDWEAKMOVE
+//           jumps 
+//    RETURN ...
+
+RANDWEAKMOVE	randnbr
+		rjumpc RWMGO
+		jumps			
+RWMGO		wmove  // move to a random neighbor (weak)	
+		jumps

@@ -1,0 +1,11 @@
+ChangeDescription:
+	Changes an agent's description every second.  Tests whether the base
+	station is updated of the new agent's description.
+
+OutLocToBS.ma:
+	Inserts a tuple containing the node's location into the base station's
+	tuple space.
+	
+GetAgentLoc.ma:
+	Gets the location of an agent using getAgentLocation.  In this case,
+	it finds its own location, so the results are the same as loc.

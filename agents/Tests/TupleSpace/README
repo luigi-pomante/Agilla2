@@ -1,0 +1,15 @@
+Tests the functionality of the local tuple space.
+
+Out.ma:
+	Places tuple <2, "ncr", 1> into the local tuple space.  Then
+	blinks all three LEDs three times.
+
+Read.ma:
+	Searches for a tuple matching the template
+	<any, any, any>.  Toggles the red LED when it finds a
+	result.  Note that the agent blocks until a match is found.
+
+In.ma:
+	Searches for and removes a tuple matching template <any, any, any>. 
+	Toggles the red LED when it finds a match.
+

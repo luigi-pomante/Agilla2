@@ -1,0 +1,15 @@
+This is an example application that uses mobile agents to
+collect light readings for display on an oscilloscope GUI.
+
+Run it by injecting an Oscilloscope agent and loading the 
+Oscilloscope client on the AgentInjector by going to 
+Experiments -> Show Oscope.
+
+There are two types of Oscilloscope agents:  
+  1) OscopeOneReadingPerMsg.ma
+  2) OscilloscopeFiveReadingsPerMsg.ma
+
+The first agent sends a single sensor reading at a time
+while the second sends 5 sensor readings at a time.  The first
+agent is able to detect dropped packets, whereas the second
+one cannot.

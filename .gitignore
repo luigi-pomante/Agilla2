@@ -1,0 +1,3 @@
+nesc/agilla/build/*
+[\d\w\.]*.swp
+*.class

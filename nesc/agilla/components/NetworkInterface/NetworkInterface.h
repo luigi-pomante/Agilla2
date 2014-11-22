@@ -1,0 +1,9 @@
+#ifndef NETWORKINTERFACE_H
+#define NETWORKINTERFACE_H
+
+enum {
+	AM_NETWORKINTERFACE = 6,
+ 
+};
+
+#endif
