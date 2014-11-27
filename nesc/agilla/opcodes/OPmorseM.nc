@@ -8,10 +8,13 @@ module OPmorseM
 	provides
 	{
 		interface BytecodeI;
+		interface Init;
 	}
 
 	uses
 	{
+		interface AgentMgrI;
+		interface QueueI;
 		interface OpStackI;
 		interface ErrorMgrI as Error;
 		interface BusyWait<TMicro,uint16_t> as BW;
@@ -24,31 +27,45 @@ module OPmorseM
 
 implementation
 {
+	Queue waitqueue;
+	AgillaAgentContext *saved_context;
+
+
+	command error_t Init.init()
+	{
+		call QueueI.init( &waitqueue );
+		return SUCCESS;
+	}
+
 	void SingleBlink( uint8_t bit )
 	{
 		uint16_t symdelay;
 
 		bit &= 1; // select only the LSB
 		if( bit == 1 )
+		{
 			symdelay = DASH_MSEC;
+			#ifdef MORSE_LED_TEST
+			call Leds.set( 1 );
+			#endif
+		}
 		else
+		{
 			symdelay = DOT_MSEC;
-			
+			#ifdef MORSE_LED_TEST
+			call Leds.set( 2 );
+			#endif
+		}
 
-#ifdef MORSE_LED_TEST
-		call Leds.set( 1 );
-#else
-		// TODO
-#endif
-		call BW.wait( DASH_MSEC );
-#ifdef MORSE_LED_TEST
-		call Leds.set( 0 );
-#else
-		// TODO
-#endif
+		//TODO: on
+		call BW.wait( symdelay );
+		//TODO: off
 
 		// in-symbol delay
 		call BW.wait( DOT_MSEC );
+		#ifdef MORSE_LED_TEST
+		call Leds.set( 0 );
+		#endif
 	}
 
 
@@ -89,16 +106,26 @@ implementation
 
 	command error_t BytecodeI.execute( uint8_t instr, AgillaAgentContext* context )
 	{
+		uint16_t arg_number = 0;
+		uint8_t name[ MAX_NAME_LENGTH ];
+		uint8_t *ptr;
 		AgillaVariable n_arg;
 		AgillaVariable name_arg;
 		int i;
 
-		uint16_t arg_number = 0;
-		uint8_t name[ MAX_NAME_LENGTH ];
-		uint8_t *ptr;
 
-		if( call OpStackI.popOperand(context, &name_arg) != SUCCESS ||
-			call OpStackI.popOperand(context, &n_arg) != SUCCESS ||
+		context->state = AGILLA_STATE_WAITING;
+		if( saved_context != NULL )
+		{
+			context->pc--;
+			call QueueI.enqueue( context, &waitqueue, context );
+			return SUCCESS;
+		}
+		saved_context = context;
+
+
+		if( call OpStackI.popOperand(context, &n_arg) != SUCCESS ||
+			call OpStackI.popOperand(context, &name_arg) != SUCCESS ||
 			name_arg.vtype != AGILLA_TYPE_STRING ||
 			n_arg.vtype != AGILLA_TYPE_VALUE )
 		{
@@ -110,13 +137,29 @@ implementation
 			return FAIL;
 
 		ptr = (uint8_t*) &( name_arg.string.string );
-		// WARNING: little or big endian?
+
+		// TODO: little or big endian?
 		for( i=0; i<arg_number; i++ )
 		{
 			name[i] = ptr[i];
 		};
 
-		StringBlink( name, arg_number );
+
+		// TEST
+		SingleBlink( 1 );
+		SingleBlink( 0 );
+		SingleBlink( 1 );
+
+
+		// Real code:
+		//StringBlink( name, arg_number );
+
+
+		//TODO: simplify
+		call AgentMgrI.run( saved_context );
+		saved_context = NULL;
+		while( ! call QueueI.empty( &waitqueue ) )
+			call AgentMgrI.run( call QueueI.dequeue( NULL, &waitqueue ) );
 		return SUCCESS;
 	}
 }

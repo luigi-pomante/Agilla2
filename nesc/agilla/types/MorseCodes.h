@@ -3,7 +3,7 @@
 
 typedef nx_struct _AgillaMorseCode
 {
-	nx_uint8_t ascii; // ascii value of the symbol. eg. 'A'
+	nx_uint8_t ascii; // ascii value of the symbol. eg. 'b'
 	nx_uint8_t size; // number of bits used (from the MSB, 0..8). eg. 3
 	nx_uint16_t code; // actual morse bitcode:
 						// 0 = short
@@ -11,25 +11,25 @@ typedef nx_struct _AgillaMorseCode
 } AgillaMorseCode;
 
 // timing
-#define DOT_MSEC 100
-#define DASH_MSEC 300
+#define DOT_MSEC 10000
+#define DASH_MSEC 30000
 
 // letter and word separator delay
-#define WORD_SEPARATOR 500
-#define LETTER_SEPARATOR 300
+#define WORD_SEPARATOR 50000
+#define LETTER_SEPARATOR 30000
 
 #define NUMOFMORSECODES 49
 AgillaMorseCode MorseCodes[ NUMOFMORSECODES ] = 
 {
-	{ 'A', 2, 0x40 }, { 'B', 4, 0x80 }, { 'C', 4, 0xA0 },
-	{ 'D', 3, 0x80 }, { 'E', 1, 0x00 }, { 'F', 4, 0x20 },
-	{ 'G', 3, 0xC0 }, { 'H', 4, 0x00 }, { 'I', 2, 0x00 },
-	{ 'J', 4, 0x70 }, { 'K', 3, 0xA0 }, { 'L', 4, 0x40 },
-	{ 'M', 2, 0xC0 }, { 'N', 2, 0x80 }, { 'O', 3, 0xE0 },
-	{ 'P', 4, 0x60 }, { 'Q', 4, 0xD0 }, { 'R', 3, 0x40 },
-	{ 'S', 3, 0x00 }, { 'T', 1, 0x80 }, { 'U', 3, 0x20 },
-	{ 'V', 4, 0x10 }, { 'W', 3, 0x60 }, { 'X', 4, 0x90 },
-	{ 'Y', 4, 0xB0 }, { 'Z', 4, 0xC0 }, { '0', 5, 0xF8 },
+	{ 'a', 2, 0x40 }, { 'b', 4, 0x80 }, { 'c', 4, 0xA0 },
+	{ 'd', 3, 0x80 }, { 'e', 1, 0x00 }, { 'f', 4, 0x20 },
+	{ 'g', 3, 0xc0 }, { 'h', 4, 0x00 }, { 'i', 2, 0x00 },
+	{ 'j', 4, 0x70 }, { 'k', 3, 0xa0 }, { 'l', 4, 0x40 },
+	{ 'm', 2, 0xc0 }, { 'n', 2, 0x80 }, { 'o', 3, 0xE0 },
+	{ 'p', 4, 0x60 }, { 'q', 4, 0xd0 }, { 'r', 3, 0x40 },
+	{ 's', 3, 0x00 }, { 't', 1, 0x80 }, { 'u', 3, 0x20 },
+	{ 'v', 4, 0x10 }, { 'w', 3, 0x60 }, { 'x', 4, 0x90 },
+	{ 'y', 4, 0xb0 }, { 'z', 4, 0xc0 }, { '0', 5, 0xF8 },
 	{ '1', 5, 0x78 }, { '2', 5, 0x38 }, { '3', 5, 0x18 },
 	{ '4', 5, 0x08 }, { '5', 5, 0x00 }, { '6', 5, 0x10 },
 	{ '7', 5, 0x30 }, { '8', 5, 0x70 }, { '9', 5, 0xF0 },
