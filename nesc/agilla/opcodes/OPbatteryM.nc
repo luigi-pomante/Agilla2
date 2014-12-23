@@ -59,12 +59,14 @@ implementation
 
 	inline error_t saveData(uint16_t data)
 	{
+		uint32_t temp_data = (uint32_t)data;
+		uint32_t coeff = (uint32_t)(10*1100*1024);
 		/*
 		The original formula is:
 			1100*1024/val
 		However, using it, the reported voltage is ~0.360 V above the
 		misured one. so....*/
-		powerValue = (uint16_t) ((10*1100*1024)/data) - 36;
+		powerValue = (uint16_t)((coeff/temp_data) - 36);
 		// On IRIS mote, voltage seembs to be 100mV * powerValue
 
 		if( post PushResult() == SUCCESS )

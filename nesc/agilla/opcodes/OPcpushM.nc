@@ -118,10 +118,12 @@ module OPcpushM {
 	provides interface BytecodeI;	
 	uses interface OpStackI as Stacks;
 }
-implementation {	
-	command error_t BytecodeI.execute(uint8_t instr, AgillaAgentContext* context) {
-	dbg("DBG_USR1", "VM (%i:%i): Pushing condition onto the stack: %i.\n", context->id.id, context->pc, context->condition);
-	call Stacks.pushValue(context, (int16_t)context->condition);
-	return SUCCESS;
+implementation
+{
+	command error_t BytecodeI.execute(uint8_t instr, AgillaAgentContext* context)
+	{
+		dbg("DBG_USR1", "VM (%i:%i): Pushing condition onto the stack: %i.\n", context->id.id, context->pc, context->condition);
+		call Stacks.pushValue(context, (int16_t)context->condition);
+		return SUCCESS;
 	}
 }

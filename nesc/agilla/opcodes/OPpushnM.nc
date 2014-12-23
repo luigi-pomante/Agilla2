@@ -60,11 +60,8 @@ implementation {
 	command error_t BytecodeI.execute(uint8_t instr, AgillaAgentContext* context)
 	{
 		uint16_t arg = call CodeMgrI.getInstruction(context, context->pc++);
-
 		arg = arg << 8;
-
 		arg += call CodeMgrI.getInstruction(context, context->pc++);
-
 		dbg("DBG_USR1", "VM (%i:%i): Executing pushn, name = 0x%x.\n", context->id.id, context->pc-3, arg);
 		return call OpStackI.pushString(context, arg);
 	}
