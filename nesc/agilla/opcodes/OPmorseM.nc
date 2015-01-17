@@ -39,6 +39,10 @@ implementation
 
 	uint8_t endstring;
 
+#ifdef MORSE_ID_CHECK
+	uint8_t id_found = 0;
+#endif
+
 
 	command error_t Init.init()
 	{
@@ -50,6 +54,11 @@ implementation
 		delay = 0;
 		pause = 0;
 		endstring = 0;
+		
+#ifdef MORSE_ID_CHECK
+		id_found = 0;
+#endif
+
 		return SUCCESS;
 	}
 
@@ -89,7 +98,6 @@ implementation
 
 		if( endstring == 1 )
 		{
-			endstring = 0;
 			#ifdef MORSE_LED_TEST
 			call Leds.set(0);
 			#endif
@@ -100,7 +108,9 @@ implementation
 
 		if( current == NULL )
 			current = getCode( string_buffer[index] );
+
 		if( current == NULL )
+		// Symbol not found
 		{
 			call Error.error( saved_context, 8 );
 			call MainTimer.stop();
@@ -122,6 +132,7 @@ implementation
 				#endif
 				break;
 			default:
+				// nor a '.' or a '-'
 				call Error.error( saved_context, 8 );
 				call MainTimer.stop();
 				break;
@@ -138,7 +149,14 @@ implementation
 			sym_index = 0;
 
 			index++;
-
+#ifdef MORSE_ID_CHECK
+			if( id_found==1 )
+			{
+				pause += 2;
+				index = 0;
+				endstring = 1;
+			}
+#endif
 			if( index > 2 )
 			{
 				// end of string
@@ -148,6 +166,19 @@ implementation
 			}
 		}
 
+	}
+
+	task void CheckTimer()
+	{
+		while( call MainTimer.isRunning() )
+		{
+			endstring=0;
+			call AgentMgrI.run( saved_context );
+			saved_context = NULL;
+			while( ! call QueueI.empty( &waitqueue ) )
+				call AgentMgrI.run( call QueueI.dequeue( NULL, &waitqueue ) );
+			return SUCCESS;
+		}
 	}
 
 	command error_t BytecodeI.execute( uint8_t instr, AgillaAgentContext* context )
@@ -172,9 +203,6 @@ implementation
 			return FAIL;
 		}
 
-		//string_buffer[0] = (char) ((name_arg.string.string >> 8) & 0xFF);
-		//tring_buffer[1] = (char) (name_arg.string.string & 0xFF);
-
 		/*  In Agilla, the 3-char string is stored in a 16bit variable
 			in a 5-5-6 pattern ( [a-z][a-z][a-z0-9] ).
 		 	The char are also stored with a fixed number (eg. a=1...0=27...) */
@@ -184,20 +212,26 @@ implementation
 		string_buffer[1] = (char)( ((name_arg.string.string>>6) & 0x1F) + 0x60 );
 		// Third char
 		string_buffer[2] = (char)( name_arg.string.string & 0x3F );
-		if( string_buffer[2] >= 27 ) // number
-			string_buffer[2] += 3;
+		if( string_buffer[2] >= 27 ) // numbero
+			string_buffer[2] += 21; // da 27 a 48 = 0x30 = ascii '0'
 		else
 			string_buffer[2] += 0x60;
-
+#ifdef MORSE_ID_CHECK
+		if( string_buffer[0] == 'i' && string_buffer[1] == 'd' )
+		{
+			id_found = 1;
+			string_buffer[0] = string_buffer[2];
+			string_buffer[1] = 0;
+			string_buffer[2] = 0;
+			call Leds.led2On();
+		}
+		else
+			id_found = 0;
+#endif
 		// Launch the main "clock"
 		call MainTimer.startPeriodic( DOT_MSEC );
-
-
-		//TODO: simplify
-		call AgentMgrI.run( saved_context );
-		saved_context = NULL;
-		while( ! call QueueI.empty( &waitqueue ) )
-			call AgentMgrI.run( call QueueI.dequeue( NULL, &waitqueue ) );
+		post CheckTimer();
 		return SUCCESS;
 	}
 }
+

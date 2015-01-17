@@ -392,14 +392,16 @@ implementation {
 	}
 	
 	
-	command error_t TS.reset() {
-	AgillaTuple tuple;	
-	uint16_t tupleSize;	 
-	call TupleUtilI.createHostIDTuple(&tuple);	
-	tupleSize = call TupleUtilI.sizeOf(&tuple); 
-	freeIndex = 0;	
-	memcpy((void *)&ts[freeIndex], (void *)&tuple, tupleSize);
-	freeIndex += tupleSize;		
-	return SUCCESS;
+	command error_t TS.reset()
+	{
+		AgillaTuple tuple;	
+		uint16_t tupleSize;	 
+		call TupleUtilI.createHostIDTuple(&tuple);	
+		tupleSize = call TupleUtilI.sizeOf(&tuple); 
+		freeIndex = 0;
+		memset( (void*)ts, 0, AGILLA_TS_SIZE );
+		memcpy((void *)&ts[freeIndex], (void *)&tuple, tupleSize);
+		freeIndex += tupleSize;		
+		return SUCCESS;
 	}
 }
