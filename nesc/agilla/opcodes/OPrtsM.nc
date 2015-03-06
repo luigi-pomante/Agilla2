@@ -103,87 +103,84 @@ implementation {
 
 	command error_t Init.init()
 	{	
-	_currAgent = NULL;	
-	call QueueI.init(&waitQueue);
-	return SUCCESS;
+		_currAgent = NULL;	
+		call QueueI.init(&waitQueue);
+		return SUCCESS;
 	}
-
- /* command error_t StdControl.start() {
-	return SUCCESS;
-	}
-
-	command error_t StdControl.stop() {
-	return SUCCESS;
-	} */
 
 	inline error_t finish(error_t success)
 	{
-	//_currAgent->condition = (uint16_t)success;	//<-QUI
-	if(success == SUCCESS) _currAgent->condition = 1;
-	else _currAgent->condition = 0;
-	call AgentMgrI.run(_currAgent);
-	_currAgent = NULL;
-	
-	// If there are pending agents, execute them
-	if (!call QueueI.empty(&waitQueue)) 
-	{
-		#if DEBUG_OP_RTS
-		dbg("DBG_USR1", "OPrtsM: finish(): WaitQueue (0x%x) not empty, running next agent.\n", &waitQueue);
-		#endif	
+		//_currAgent->condition = (uint16_t)success;	//<-QUI
+		if(success == SUCCESS)
+			_currAgent->condition = 1;
+		else
+			_currAgent->condition = 0;
+
+		call AgentMgrI.run(_currAgent);
 		
-		call AgentMgrI.run(call QueueI.dequeue(NULL, &waitQueue));		
-	}
-	return SUCCESS;
+		_currAgent = NULL;
+
+		// If there are pending agents, execute them
+		if (!call QueueI.empty(&waitQueue)) 
+		{
+			#if DEBUG_OP_RTS
+			dbg("DBG_USR1", "OPrtsM: finish(): WaitQueue (0x%x) not empty, running next agent.\n", &waitQueue);
+			#endif	
+
+			call AgentMgrI.run(call QueueI.dequeue(NULL, &waitQueue));		
+		}
+		return SUCCESS;
 	}
 
 	
-	event error_t RemoteTSOpMgrI.done(AgillaAgentContext* agent, 
-	uint16_t dest, error_t success)
+	event error_t RemoteTSOpMgrI.done(AgillaAgentContext* agent, uint16_t dest, error_t success)
 	{ 
-	if (_instr == IOProutgs)
-	{
-		if (post doOProutgs() == SUCCESS)
-		return SUCCESS;
+		if (_instr == IOProutgs)
+		{
+			if (post doOProutgs() == SUCCESS)
+				return SUCCESS;
+			else
+			{
+				dbg("DBG_USR1", "VM (%i:%i): OPrtsM: RemoteTSOpMgrI.done(): ERROR: Could not post doOProutgs().\n", _currAgent->id.id, _currAgent->pc-1);
+				return finish(FAIL);
+			}
+		}
+		else if (_instr == IOPrrdpgs)
+		{
+			if (success == SUCCESS) 
+			{
+				AgillaTuple buff; 
+				AgillaLocation loc;
+
+				// remove the tuple from the agent's stack		 
+				call TupleUtilI.getTuple(agent, &buff);
+
+				// get the destination's location
+				if (call LocationMgrI.getLocation(dest, &loc) == SUCCESS)
+				{
+					agent->heap.pos[0].value.value++; // update number of results
+					agent->heap.pos[agent->heap.pos[0].value.value].vtype = AGILLA_TYPE_LOCATION;
+					agent->heap.pos[agent->heap.pos[0].value.value].loc = loc;
+
+					#if DEBUG_OP_RTS
+					dbg("DBG_USR1", "OPrtsM: OPrrdpgs: Saved location (%i, %i) onto heap[%i].\n",
+							agent->heap.pos[agent->heap.pos[0].value.value].loc.x,
+							agent->heap.pos[agent->heap.pos[0].value.value].loc.y,
+							agent->heap.pos[0].value.value);
+					#endif				
+				}
+			}
+
+			if (post doOPrrdpgs() == SUCCESS)
+				return SUCCESS;
+			else
+			{
+				dbg("DBG_USR1", "VM (%i:%i): OPrtsM: RemoteTSOpMgrI.done(): ERROR: Could not post doOPrrdpgs().\n", _currAgent->id.id, _currAgent->pc-1);
+				return finish(FAIL);
+			}
+		}
 		else
-		{
-		dbg("DBG_USR1", "VM (%i:%i): OPrtsM: RemoteTSOpMgrI.done(): ERROR: Could not post doOProutgs().\n", _currAgent->id.id, _currAgent->pc-1);
-		return finish(FAIL);
-		}
-	} else if (_instr == IOPrrdpgs)
-	{
-		if (success == SUCCESS) 
-		{
-		AgillaTuple buff; 
-		AgillaLocation loc;
-		 
-		// remove the tuple from the agent's stack		 
-		call TupleUtilI.getTuple(agent, &buff);
-		 
-		// get the destination's location
-		if (call LocationMgrI.getLocation(dest, &loc) == SUCCESS)
-		{
-			agent->heap.pos[0].value.value++; // update number of results
-			agent->heap.pos[agent->heap.pos[0].value.value].vtype = AGILLA_TYPE_LOCATION;
-			agent->heap.pos[agent->heap.pos[0].value.value].loc = loc;
-			
-			#if DEBUG_OP_RTS
-			dbg("DBG_USR1", "OPrtsM: OPrrdpgs: Saved location (%i, %i) onto heap[%i].\n",
-				agent->heap.pos[agent->heap.pos[0].value.value].loc.x,
-				agent->heap.pos[agent->heap.pos[0].value.value].loc.y,
-				agent->heap.pos[0].value.value);
-			#endif				
-		}
-		}
-		
-		if (post doOPrrdpgs() == SUCCESS)
-		return SUCCESS;
-		else
-		{
-		dbg("DBG_USR1", "VM (%i:%i): OPrtsM: RemoteTSOpMgrI.done(): ERROR: Could not post doOPrrdpgs().\n", _currAgent->id.id, _currAgent->pc-1);
-		return finish(FAIL);
-		}
-	} else
-		return finish(success);	
+			return finish(success);	
 	}
 
 	/**
@@ -191,30 +188,30 @@ implementation {
 	 */
 	inline void printDebug(AgillaAgentContext* context, uint8_t instr) 
 	{
-	switch(instr)	// print debug message
-	{	
-		case IOProut:
-		dbg("DBG_USR1", "VM (%i:%i): Executing OProut.\n", context->id.id, context->pc-1);
-		break;
-		case IOPrinp:
-		dbg("DBG_USR1", "VM (%i:%i): Executing OPrinp.\n", context->id.id, context->pc-1);
-		break;
-		case IOPrrdp:
-		dbg("DBG_USR1", "VM (%i:%i): Executing OPrrdp.\n", context->id.id, context->pc-1);
-		break;
-		case IOPrrdpg:
-		dbg("DBG_USR1", "VM (%i:%i): Executing OPrrdpg.\n", context->id.id, context->pc-1);
-		break;		
-		case IOProutg:
-		dbg("DBG_USR1", "VM (%i:%i): Executing OProutg.\n", context->id.id, context->pc-1);
-		break;		
-		case IOProutgs:
-		dbg("DBG_USR1", "VM (%i:%i): Executing OProutgs.\n", context->id.id, context->pc-1);
-		break;			
-		case IOPrrdpgs:
-		dbg("DBG_USR1", "VM (%i:%i): Executing OPrrdpgs.\n", context->id.id, context->pc-1);
-		break;					
-	}		 
+		switch(instr)	// print debug message
+		{	
+			case IOProut:
+				dbg("DBG_USR1", "VM (%i:%i): Executing OProut.\n", context->id.id, context->pc-1);
+				break;
+			case IOPrinp:
+				dbg("DBG_USR1", "VM (%i:%i): Executing OPrinp.\n", context->id.id, context->pc-1);
+				break;
+			case IOPrrdp:
+				dbg("DBG_USR1", "VM (%i:%i): Executing OPrrdp.\n", context->id.id, context->pc-1);
+				break;
+			case IOPrrdpg:
+				dbg("DBG_USR1", "VM (%i:%i): Executing OPrrdpg.\n", context->id.id, context->pc-1);
+				break;		
+			case IOProutg:
+				dbg("DBG_USR1", "VM (%i:%i): Executing OProutg.\n", context->id.id, context->pc-1);
+				break;		
+			case IOProutgs:
+				dbg("DBG_USR1", "VM (%i:%i): Executing OProutgs.\n", context->id.id, context->pc-1);
+				break;			
+			case IOPrrdpgs:
+				dbg("DBG_USR1", "VM (%i:%i): Executing OPrrdpgs.\n", context->id.id, context->pc-1);
+				break;					
+		}		 
 	} // printDebug()
 	
 	/**
@@ -226,185 +223,187 @@ implementation {
 	 */
 	command error_t BytecodeI.execute(uint8_t instr, AgillaAgentContext* context)
 	{		
-	// Change the context's state to WAITING.	This prevents the VM
-	// from continuing to execute the agent.
-	context->state = AGILLA_STATE_WAITING;
-		
-	// Mutual Exclusion.	Only allow one agent to perform
-	// a remote tuple space operation at a time.
-	if (_currAgent != NULL) 
-	{
-		#if DEBUG_OP_RTS
-		dbg("DBG_USR1", "OPrtsM: execute(): Another agent is performing remote TS Op, waiting...\n");
-		#endif	
-		
-		context->pc--;		
-		return call QueueI.enqueue(context, &waitQueue, context);
-	} else
-	{		
-		uint16_t dest;
-		_instr = instr;
-	 
-		_currAgent = context;
-		
-		printDebug(context, instr);
+		// Change the context's state to WAITING.	This prevents the VM
+		// from continuing to execute the agent.
+		context->state = AGILLA_STATE_WAITING;
 
-		// Get the final destination address
-		if (instr == IOPrrdpg || instr == IOProutg || instr == IOProutgs || instr == IOPrrdpgs)
-		dest = AM_BROADCAST_ADDR;
-		else 
+		// Mutual Exclusion.	Only allow one agent to perform
+		// a remote tuple space operation at a time.
+		if( _currAgent != NULL )
+		{
+			#if DEBUG_OP_RTS
+			dbg("DBG_USR1", "OPrtsM: execute(): Another agent is performing remote TS Op, waiting...\n");
+			#endif	
+			context->pc--;		
+			return call QueueI.enqueue(context, &waitQueue, context);
+		}
+		else
 		{		
-		AgillaVariable destV;	 
-		if (call OpStackI.popOperand(_currAgent, &destV) == SUCCESS) 
-		{		 
-			if (destV.vtype & AGILLA_VAR_V)
-			dest = destV.value.value;
-			else if (destV.vtype & AGILLA_VAR_L)
-			dest = call LocationMgrI.getAddress(&destV.loc);	// convert location to address
+			uint16_t dest;
+			_instr = instr;
+
+			_currAgent = context;
+
+			printDebug(context, instr);
+
+			// Get the final destination address
+			if (instr == IOPrrdpg || instr == IOProutg || instr == IOProutgs || instr == IOPrrdpgs)
+				dest = AM_BROADCAST_ADDR;
 			else 
+			{		
+				AgillaVariable destV;	 
+				if (call OpStackI.popOperand(_currAgent, &destV) == SUCCESS) 
+				{		 
+					if (destV.vtype & AGILLA_VAR_V)
+						dest = destV.value.value;
+					else if (destV.vtype & AGILLA_VAR_L)
+						dest = call LocationMgrI.getAddress(&destV.loc);	// convert location to address
+					else 
+					{
+						dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: Invalid destination type [%i].\n", 
+								_currAgent->id.id, _currAgent->pc-1, destV.vtype);
+						call ErrorMgrI.error2d(_currAgent, AGILLA_ERROR_INVALID_TYPE, 0x11, destV.vtype);
+						return finish(FAIL);
+					}
+				} else
+				{
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: Could not pop destination off stack.\n", 
+							_currAgent->id.id, _currAgent->pc-1);
+					return finish(FAIL);
+				}
+			}
+
+			#if DEBUG_OP_RTS
+			if (instr == IOProutgs || instr == IOPrrdpgs)
+				dbg("DBG_USR1", "OPrtsM: final destination = every neighbor\n");
+			else {
+				dbg("DBG_USR1", "OPrtsM: final destination = %i\n", dest);
+			}
+			#endif		
+
+			// Get the template or tuple	
+			if (call TupleUtilI.getTuple(_currAgent, &tuple) != SUCCESS)
 			{
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: Invalid destination type [%i].\n", 
-				_currAgent->id.id, _currAgent->pc-1, destV.vtype);
-			call ErrorMgrI.error2d(_currAgent, AGILLA_ERROR_INVALID_TYPE, 0x11, destV.vtype);
-			return finish(FAIL);
+				dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: Could not get tuple.\n", _currAgent->id.id, _currAgent->pc-1);
+				return finish(FAIL);	// could not get tuple	
+			}
+			else
+			{
+				#if DEBUG_OP_RTS
+				call TupleUtilI.printTuple(&tuple);
+				#endif
+			}
+
+			if (instr == IOProutgs)
+			{
+				_cNbrIndex = 0;
+				if (post doOProutgs() != SUCCESS)
+				{
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: RemoteTSOpMgrI.execute() could not post dOProutgs().\n", _currAgent->id.id, _currAgent->pc-1);
+					return finish(FAIL);
+				}
+				else
+				{
+					#if DEBUG_OP_RTS
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM: posted task dOProutgs().\n", _currAgent->id.id, _currAgent->pc-1);
+					#endif
+					return SUCCESS;
+				}
+			} 
+			else if (instr == IOPrrdpgs)
+			{
+				_cNbrIndex = 0;
+
+				// initialize the number of results
+				_currAgent->heap.pos[0].vtype = AGILLA_TYPE_VALUE;
+				_currAgent->heap.pos[0].value.value = 0;
+
+				if (post doOPrrdpgs() != SUCCESS)
+				{
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: RemoteTSOpMgrI.execute() could not post dOPrrdpgs().\n", _currAgent->id.id, _currAgent->pc-1);
+					return finish(FAIL);
+				}
+				else
+				{
+					#if DEBUG_OP_RTS
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM: posted task dOPrrdpgs().\n", _currAgent->id.id, _currAgent->pc-1);
+					#endif
+					return SUCCESS;
+				}	 
+			}
+			else
+			{
+				if (call RemoteTSOpMgrI.execute(_currAgent, instr, dest, tuple) != SUCCESS)
+				{
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: RemoteTSOpMgrI.execute() returned fail.\n", _currAgent->id.id, _currAgent->pc-1);
+					return finish(FAIL);
+				}
+				else
+					return SUCCESS;
+			}
+		}
+	} // BytecodeI.execute
+
+
+	task void doOProutgs()
+	{
+		if (call NeighborListI.numNeighbors() > _cNbrIndex)
+		{
+			uint16_t dest;
+			if (call NeighborListI.getNeighbor(_cNbrIndex++, &dest) == SUCCESS)
+			{
+				if (call RemoteTSOpMgrI.execute(_currAgent, IOProut, dest, tuple) != SUCCESS)
+				{
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM.doOProutgs(): ERROR: RemoteTSOpMgrI.execute() returned fail.\n", _currAgent->id.id, _currAgent->pc-1);
+					finish(FAIL);
+				} else 
+				{
+#if DEBUG_OP_RTS
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM: performing rout on node %i.\n", _currAgent->id.id, _currAgent->pc-1, dest);
+#endif
+				}
+			} else
+			{
+				dbg("DBG_USR1", "VM (%i:%i): OPrtsM.doOProutgs(): ERROR: Could not get neighbor %i.\n", _currAgent->id.id, _currAgent->pc-1, _cNbrIndex-1);
+				post doOProutgs();
 			}
 		} else
 		{
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: Could not pop destination off stack.\n", 
-			_currAgent->id.id, _currAgent->pc-1);
-			return finish(FAIL);
-		}
-		}
-
-		#if DEBUG_OP_RTS
-		if (instr == IOProutgs || instr == IOPrrdpgs)
-			dbg("DBG_USR1", "OPrtsM: final destination = every neighbor\n");
-		else {
-			dbg("DBG_USR1", "OPrtsM: final destination = %i\n", dest);
-		}
-		#endif		
-
-		// Get the template or tuple	
-		if(call TupleUtilI.getTuple(_currAgent, &tuple) != SUCCESS)
-		{
-		dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: Could not get tuple.\n", _currAgent->id.id, _currAgent->pc-1);
-		return finish(FAIL);	// could not get tuple	
-		} else
-		{
-		#if DEBUG_OP_RTS
-			call TupleUtilI.printTuple(&tuple);
-		#endif
-		}
-
-		if (instr == IOProutgs)
-		{
-		_cNbrIndex = 0;
-		if (post doOProutgs() != SUCCESS)
-		{
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: RemoteTSOpMgrI.execute() could not post dOProutgs().\n", _currAgent->id.id, _currAgent->pc-1);
-			return finish(FAIL);
-		} else
-		{
-			#if DEBUG_OP_RTS
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: posted task dOProutgs().\n", _currAgent->id.id, _currAgent->pc-1);
-			#endif
-			return SUCCESS;
-		}
-		} 
-		
-		else if (instr == IOPrrdpgs)
-		{
-		_cNbrIndex = 0;
-		
-		// initialize the number of results
-		_currAgent->heap.pos[0].vtype = AGILLA_TYPE_VALUE;
-		_currAgent->heap.pos[0].value.value = 0;
-		
-		if (post doOPrrdpgs() != SUCCESS)
-		{
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: RemoteTSOpMgrI.execute() could not post dOPrrdpgs().\n", _currAgent->id.id, _currAgent->pc-1);
-			return finish(FAIL);
-		} else
-		{
-			#if DEBUG_OP_RTS
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: posted task dOPrrdpgs().\n", _currAgent->id.id, _currAgent->pc-1);
-			#endif
-			return SUCCESS;
-		}	 
-		}
-		
-		else
-		{
-		if (call RemoteTSOpMgrI.execute(_currAgent, instr, dest, tuple) != SUCCESS)
-		{
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: ERROR: RemoteTSOpMgrI.execute() returned fail.\n", _currAgent->id.id, _currAgent->pc-1);
-			return finish(FAIL);
-		} else
-			return SUCCESS;
+#if DEBUG_OP_RTS
+			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: done performing routgs.\n", _currAgent->id.id, _currAgent->pc-1);
+#endif
+			finish(SUCCESS);
 		}
 	}
-	} // BytecodeI.execute
-	
-	
-	task void doOProutgs()
-	{
-	if (call NeighborListI.numNeighbors() > _cNbrIndex)
-	{
-		uint16_t dest;
-		if (call NeighborListI.getNeighbor(_cNbrIndex++, &dest) == SUCCESS)
-		{
-		if (call RemoteTSOpMgrI.execute(_currAgent, IOProut, dest, tuple) != SUCCESS)
-		{
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM.doOProutgs(): ERROR: RemoteTSOpMgrI.execute() returned fail.\n", _currAgent->id.id, _currAgent->pc-1);
-			finish(FAIL);
-		} else 
-		{
-			#if DEBUG_OP_RTS
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: performing rout on node %i.\n", _currAgent->id.id, _currAgent->pc-1, dest);
-			#endif
-		}
-		} else
-		{
-		dbg("DBG_USR1", "VM (%i:%i): OPrtsM.doOProutgs(): ERROR: Could not get neighbor %i.\n", _currAgent->id.id, _currAgent->pc-1, _cNbrIndex-1);
-		post doOProutgs();
-		}
-	} else
-	{
-		#if DEBUG_OP_RTS
-		dbg("DBG_USR1", "VM (%i:%i): OPrtsM: done performing routgs.\n", _currAgent->id.id, _currAgent->pc-1);
-		#endif
-		finish(SUCCESS);
-	}
-	}
-	
+
 	task void doOPrrdpgs()
 	{
-	if (call NeighborListI.numNeighbors() > _cNbrIndex)
-	{
-		uint16_t dest;
-		if (call NeighborListI.getNeighbor(_cNbrIndex++, &dest) == SUCCESS)
+		if (call NeighborListI.numNeighbors() > _cNbrIndex)
 		{
-		if (call RemoteTSOpMgrI.execute(_currAgent, IOPrrdp, dest, tuple) != SUCCESS)
-		{
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM.doOPrrdpgs(): ERROR: RemoteTSOpMgrI.execute() returned fail.\n", _currAgent->id.id, _currAgent->pc-1);
-			finish(FAIL);
-		} else 
-		{
-			#if DEBUG_OP_RTS
-			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: performing rrdp on node %i.\n", _currAgent->id.id, _currAgent->pc-1, dest);
-			#endif
-		}
+			uint16_t dest;
+			if (call NeighborListI.getNeighbor(_cNbrIndex++, &dest) == SUCCESS)
+			{
+				if (call RemoteTSOpMgrI.execute(_currAgent, IOPrrdp, dest, tuple) != SUCCESS)
+				{
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM.doOPrrdpgs(): ERROR: RemoteTSOpMgrI.execute() returned fail.\n", _currAgent->id.id, _currAgent->pc-1);
+					finish(FAIL);
+				} else 
+				{
+#if DEBUG_OP_RTS
+					dbg("DBG_USR1", "VM (%i:%i): OPrtsM: performing rrdp on node %i.\n", _currAgent->id.id, _currAgent->pc-1, dest);
+#endif
+				}
+			} else
+			{
+				dbg("DBG_USR1", "VM (%i:%i): OPrtsM.doOProutgs(): ERROR: Could not get neighbor %i.\n", _currAgent->id.id, _currAgent->pc-1, _cNbrIndex-1);
+				post doOProutgs();
+			}
 		} else
 		{
-		dbg("DBG_USR1", "VM (%i:%i): OPrtsM.doOProutgs(): ERROR: Could not get neighbor %i.\n", _currAgent->id.id, _currAgent->pc-1, _cNbrIndex-1);
-		post doOProutgs();
-		}
-	} else
-	{
-		#if DEBUG_OP_RTS
-		dbg("DBG_USR1", "VM (%i:%i): OPrtsM: done performing rrdpgs.\n", _currAgent->id.id, _currAgent->pc-1);
-		#endif
-		finish(SUCCESS);
-	}	
+#if DEBUG_OP_RTS
+			dbg("DBG_USR1", "VM (%i:%i): OPrtsM: done performing rrdpgs.\n", _currAgent->id.id, _currAgent->pc-1);
+#endif
+			finish(SUCCESS);
+		}	
 	}
 }

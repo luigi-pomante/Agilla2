@@ -223,7 +223,9 @@ implementation
 			string_buffer[0] = string_buffer[2];
 			string_buffer[1] = 0;
 			string_buffer[2] = 0;
+			#ifdef MORSE_LED_TEST
 			call Leds.led2On();
+			#endif
 		}
 		else
 			id_found = 0;
