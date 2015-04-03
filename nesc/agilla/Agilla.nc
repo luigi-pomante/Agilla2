@@ -137,11 +137,17 @@ implementation
 	#endif
 
 	#if OPCLEARTS
+		// Tuplespace cleaning instruction
 		components OPcleartsC;
 	#endif
 
 	#if OPMORSE
+		// Morse istruction (modded MDA100 sensorboard only)
 		components OPmorseC;
+	#endif
+
+	#if CHECKVOICE
+		components OPcheckvoiceC;
 	#endif
 
 	/**	 Extended ISA 1 **/
@@ -484,6 +490,11 @@ implementation
 	#if OPMORSE
 		AgillaEngineC.ExtendedISA1[IOPmorse] -> OPmorseC;
 	#endif
+
+	#if CHECKVOICE
+		AgillaEngineC.ExtendedISA1[IOPcheckvoice] -> OPcheckvoiceC;
+	#endif
+
 
 
 	#if !ENABLE_CLUSTERING

@@ -1,6 +1,11 @@
 #include "Agilla.h"
 
-module OPbatteryM
+
+#define SAMPLERATE 125
+#define NUM_OF_SAMPLES 90
+
+
+module OPcheckvoiceM
 {
 	provides
 	{
@@ -13,9 +18,8 @@ module OPbatteryM
 		interface AgentMgrI;
 		interface QueueI;
 		interface OpStackI;
-		interface TupleUtilI;
 		interface ErrorMgrI as Error;
-		interface Read<uint16_t> as Voltage;
+		interface ReadStream<uint16_t> as mic;
 	}
 }
 
@@ -23,8 +27,11 @@ module OPbatteryM
 implementation
 {
 	Queue waitQueue;
-	norace uint8_t powerValue;
 	AgillaAgentContext* saved_context;
+	uint16_t resultDips;
+	uint16_t samples[ NUM_OF_SAMPLES ];
+	uint16_t amdt[ NUM_OF_SAMPLES/2 ];
+
 
 	command error_t Init.init()
 	{
@@ -32,9 +39,11 @@ implementation
 		return SUCCESS;
 	}
 
+
 	command error_t BytecodeI.execute( uint8_t instr, AgillaAgentContext* context )
 	{
 		context->state = AGILLA_STATE_WAITING;
+		resultDips = 0;
 		if( saved_context != NULL)
 		{
 			context->pc--;
@@ -43,48 +52,52 @@ implementation
 		}
 
 		saved_context = context;
-		atomic { call Voltage.read(); }
+
+		call mic.postBuffer( samples, sizeof(uint16_t)*NUM_OF_SAMPLES );
+		atomic { call mic.read( SAMPLERATE ); }
 
 		return SUCCESS;
 	}
 
+
 	task void PushResult()
 	{
-		call OpStackI.pushValue( saved_context, powerValue );
-		call AgentMgrI.run( saved_context );
+		call OpStackI.pushValue( saved_context, resultDips );
+
+		while( SUCCESS!=call AgentMgrI.run( saved_context ) );
+
 		saved_context = NULL;
 		while( ! call QueueI.empty(&waitQueue) )
 			call AgentMgrI.run(call QueueI.dequeue(NULL, &waitQueue));
 	}
 
+
 	inline error_t saveData(uint16_t data)
 	{
-		uint32_t temp_data = (uint32_t)data;
-
-		//uint32_t coeff = 10*1100*1024;
-		uint32_t coeff = 11264000;
-
-		/*
-		The original formula is:
-			1100*1024/val
-		However, using it, the reported voltage is ~0.360 V above the
-		misured one. so....*/
-		powerValue = (uint16_t)((coeff/temp_data) - 36);
-		// On IRIS mote, voltage seembs to be 100mV * powerValue
-
+		resultDips = data;
 		if( post PushResult() == SUCCESS )
 			return SUCCESS;
 		else
 			return FAIL;
 	}
 
-
-	event void Voltage.readDone( error_t e, uint16_t val )
+	
+	inline uint16_t isThereHumanVoice()
 	{
-		if( e == SUCCESS )
-		{
-			saveData( val );
-		}
+		return 31; // test value
+	}
+
+
+	event void mic.readDone( error_t result, uint32_t usActualPeriod )
+	{
+		if( result == SUCCESS )
+			saveData( isThereHumanVoice() );
+	}
+
+
+	event void mic.bufferDone(error_t result, uint16_t* buf, uint16_t count)
+	{
+
 	}
 }
 

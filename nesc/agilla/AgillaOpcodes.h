@@ -248,9 +248,12 @@ typedef enum {
 	
 	IOPfindMatch = 0x1c,
 
+	// UNIVAQ added instruction
 	IOPbattery = 0x1d,
 	IOPclearts = 0x1e,
 	IOPmorse = 0x1f,
+	IOPcheckvoice = 0x20,
+	// ------------------------
 
 	IOPegetvar = 0x80,	// 10xx xxxx 
 	IOPesetvar = 0xc0,	// 11xx xxxx

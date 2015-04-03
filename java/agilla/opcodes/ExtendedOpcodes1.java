@@ -68,9 +68,12 @@ public interface ExtendedOpcodes1
 	
 	public static final short OPfindMatch = 0x1c;
 
+	// instructions by UNIVAQ
 	public static final short OPbattery = 0x1d;
 	public static final short OPclearts = 0x1e;
 	public static final short OPmorse = 0x1f;
+	public static final short OPcheckvoice = 0x20;
+	// -------------------------
 	
 	public static final short OPegetvar    = 0x80;  // 7th bit must = 0
 	public static final int ArgNumOPegetvar = 1;
