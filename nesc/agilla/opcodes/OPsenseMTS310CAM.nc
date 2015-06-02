@@ -49,7 +49,6 @@
 module OPsenseMTS310CAM {
 	provides {
 	interface BytecodeI;
-
 	interface Init;
 	}
 	uses {
@@ -81,99 +80,105 @@ implementation {
 	return SUCCESS;
 	}
 
-	inline void resume() {
-	call AgentMgrI.run(_context);
-	_context = NULL;
-	
-	// Resume all agents in the wait queue.	It is necessary to
-	// resume all agents because some of them might have reacted
-	// while waiting.
-	while (!call QueueI.empty(&waitQueue)) {
-		call AgentMgrI.run(call QueueI.dequeue(NULL, &waitQueue));		
-	}	
+	inline void resume()
+	{
+		call AgentMgrI.run(_context);
+		_context = NULL;
+
+		// Resume all agents in the wait queue.	It is necessary to
+		// resume all agents because some of them might have reacted
+		// while waiting.
+		while (!call QueueI.empty(&waitQueue))
+		{
+			call AgentMgrI.run(call QueueI.dequeue(NULL, &waitQueue));		
+		}	
 	}
 	
-	task void senseDone() {
+	task void senseDone()
+	{
 		call OpStackI.pushReading(_context, reading.type, reading.reading);
 		resume();
 	}
 
-	event void SounderTimer.fired() {
+	event void SounderTimer.fired()
+	{
 		call Sounder.beep(256);
 	}
 	
-	command error_t BytecodeI.execute(uint8_t instr, AgillaAgentContext* context) {
-	AgillaVariable arg;	
-	context->state = AGILLA_STATE_WAITING;	// this prevents VM from running agent 
-	
-	// only one agent can sense at a time
-	if (_context != NULL) {		
-		context->pc--;			// re-run this instruction 
-		call QueueI.enqueue(context, &waitQueue, context); // store waiting context
-		return SUCCESS;
-	}
-	
-	_context = context;
-	if (call OpStackI.popOperand(context, &arg) == SUCCESS) {
-		if (!(arg.vtype & AGILLA_TYPE_VALUE)) {
-		 dbg("DBG_USR1", "VM (%i:%i): ERRROR: OPsenseM.execute(): Invalid sensor argument type.\n", context->id.id, context->pc-1);
-		 call ErrorMgrI.errord(context, AGILLA_ERROR_INVALID_SENSOR, arg.vtype);
-		 return FAIL;
-		}		 
-	
-		reading.type = arg.value.value;
-		dbg("DBG_USR1", "VM (%i:%i): Executing OPsense with value %i.\n", context->id.id, context->pc-1, reading.type);
-		switch(reading.type) {
-		case AGILLA_STYPE_SOUNDER:
-			if (sounderOn) {
-			atomic {
-				call SounderTimer.stop();			 
-				sounderOn = FALSE;
-			}
-			} else {
-			atomic {
-				call SounderTimer.startPeriodic(512);
-				sounderOn = TRUE;
-			}
-			}
-			_context = NULL;
-			context->state = AGILLA_STATE_RUN;
-		break;
-		case AGILLA_STYPE_PHOTO:
-			atomic {		 
-			call Read_Photo.read();
-			}
-		break;
-		case AGILLA_STYPE_TEMP:
-			atomic {
-			call Read_Temp.read();
-			}
-		break;
-		case AGILLA_STYPE_MIC:
-			atomic {
-			call Read_Mic.read();
-			}
-		break;
-		case AGILLA_STYPE_ACCELX:
-			atomic {
-			call Read_AccelX.read();
-			}
-		break;
-		case AGILLA_STYPE_ACCELY:
-			atomic {
-			call Read_AccelY.read();
-			}
-		break;		
-		default:
-			dbg("DBG_USR1", "VM (%i:%i): ERRROR: Invalid sensor argument.\n", context->id.id, context->pc-1);
-			call ErrorMgrI.errord(context, AGILLA_ERROR_INVALID_SENSOR, reading.type);		
-		}	 
-		return SUCCESS;
-	} 
-	return FAIL; 
+	command error_t BytecodeI.execute(uint8_t instr, AgillaAgentContext* context)
+	{
+		AgillaVariable arg;	
+		context->state = AGILLA_STATE_WAITING;	// this prevents VM from running agent 
+
+		// only one agent can sense at a time
+		if (_context != NULL) {		
+			context->pc--;			// re-run this instruction 
+			call QueueI.enqueue(context, &waitQueue, context); // store waiting context
+			return SUCCESS;
+		}
+
+		_context = context;
+		if (call OpStackI.popOperand(context, &arg) == SUCCESS) {
+			if (!(arg.vtype & AGILLA_TYPE_VALUE)) {
+				dbg("DBG_USR1", "VM (%i:%i): ERRROR: OPsenseM.execute(): Invalid sensor argument type.\n", context->id.id, context->pc-1);
+				call ErrorMgrI.errord(context, AGILLA_ERROR_INVALID_SENSOR, arg.vtype);
+				return FAIL;
+			}		 
+
+			reading.type = arg.value.value;
+			dbg("DBG_USR1", "VM (%i:%i): Executing OPsense with value %i.\n", context->id.id, context->pc-1, reading.type);
+			switch(reading.type) {
+				case AGILLA_STYPE_SOUNDER:
+					if (sounderOn) {
+						atomic {
+							call SounderTimer.stop();			 
+							sounderOn = FALSE;
+						}
+					} else {
+						atomic {
+							call SounderTimer.startPeriodic(512);
+							sounderOn = TRUE;
+						}
+					}
+					_context = NULL;
+					context->state = AGILLA_STATE_RUN;
+					break;
+				case AGILLA_STYPE_PHOTO:
+					atomic {		 
+						call Read_Photo.read();
+					}
+					break;
+				case AGILLA_STYPE_TEMP:
+					atomic {
+						call Read_Temp.read();
+					}
+					break;
+				case AGILLA_STYPE_MIC:
+					atomic {
+						call Read_Mic.read();
+					}
+					break;
+				case AGILLA_STYPE_ACCELX:
+					atomic {
+						call Read_AccelX.read();
+					}
+					break;
+				case AGILLA_STYPE_ACCELY:
+					atomic {
+						call Read_AccelY.read();
+					}
+					break;		
+				default:
+					dbg("DBG_USR1", "VM (%i:%i): ERRROR: Invalid sensor argument.\n", context->id.id, context->pc-1);
+					call ErrorMgrI.errord(context, AGILLA_ERROR_INVALID_SENSOR, reading.type);		
+			}	 
+			return SUCCESS;
+		} 
+		return FAIL; 
 	}	
 	
-	inline error_t saveData(uint16_t data) {
+	inline error_t saveData(uint16_t data)
+	{
 	reading.reading = data;
 	if(post senseDone() == SUCCESS) return SUCCESS;
 	else return FAIL;

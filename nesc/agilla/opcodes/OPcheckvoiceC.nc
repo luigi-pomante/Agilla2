@@ -20,6 +20,10 @@ implementation
 	components AgentMgrC;
 	components QueueProxy;
 
+	// for debug purposes
+	components LedsC;
+	OPcheckvoiceM.Leds -> LedsC;
+
 	MainC.SoftwareInit -> OPcheckvoiceM.Init;
 	OPcheckvoiceM.AgentMgrI -> AgentMgrC;
 	OPcheckvoiceM.OpStackI -> OpStackC;
